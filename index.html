@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#2E5A38">
 <title>CWA Strahan Branch · Recipe Collection</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CWA Recipes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -34,12 +41,11 @@
   }
   .crest{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 18px 30px}
   .emblem{
-    width:76px;height:76px;border-radius:50%;border:3px solid var(--gold);
-    display:grid;place-items:center;margin-bottom:12px;
-    background:radial-gradient(circle at 50% 35%, #3a6d46, #234a2e);
-    box-shadow:0 0 0 6px rgba(194,154,69,.18);
+    width:92px;height:92px;border-radius:20px;
+    margin-bottom:12px;overflow:hidden;
+    box-shadow:0 0 0 3px var(--gold), 0 0 0 9px rgba(194,154,69,.18), 0 4px 14px rgba(0,0,0,.25);
   }
-  .emblem span{font-family:"Fraunces",serif;font-weight:700;font-size:26px;color:#F3EFE2;letter-spacing:.5px}
+  .emblem img{width:100%;height:100%;object-fit:cover;display:block}
   .eyebrow{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:#E7DFC7;opacity:.9;margin:0 0 4px}
   .masthead h1{margin:2px 0 2px;font-weight:600;font-size:clamp(30px,6vw,46px);letter-spacing:.5px;line-height:1.02;color:#FCF9EF}
   .masthead .sub{font-size:15px;color:#E7DFC7;margin:0}
@@ -150,6 +156,7 @@
     body{background:#fff;font-size:11.5pt;color:#1e1d1a}
     @page{margin:16mm 16mm 22mm}
     .print-head{display:block;text-align:center;border-bottom:3px double var(--gold);padding-bottom:10px;margin-bottom:16px}
+    .print-head .ph-logo{width:58px;height:58px;border-radius:12px;display:inline-block;margin-bottom:6px}
     .print-head .ph-org{font-size:9.5pt;letter-spacing:.22em;text-transform:uppercase;color:var(--green-d);margin:0}
     .print-head .ph-branch{font-family:"Fraunces",Georgia,serif;font-size:24pt;font-weight:600;color:var(--green-d);margin:2px 0}
     .print-head .ph-sub{font-size:9.5pt;color:#6E6A5E;margin:0;font-style:italic}
@@ -170,7 +177,7 @@
 
 <header class="masthead">
   <div class="crest">
-    <div class="emblem"><span>CWA</span></div>
+    <div class="emblem"><img src="icons/logo.png" alt="CWA Strahan Recipes"></div>
     <p class="eyebrow">Country Women's Association in Tasmania</p>
     <h1>Strahan Branch</h1>
     <p class="sub">Recipe Collection · from our kitchens to yours</p>
@@ -208,6 +215,7 @@
       Back to the collection
     </button>
     <div class="print-head">
+      <img class="ph-logo" src="icons/logo.png" alt="">
       <p class="ph-org">Country Women's Association in Tasmania</p>
       <p class="ph-branch">Strahan Branch</p>
       <p class="ph-sub">Recipe Collection · from our kitchens to yours</p>
@@ -704,6 +712,14 @@ document.getElementById("closeSubmit").onclick = ()=>document.getElementById("su
 document.getElementById("submitModal").onclick = e=>{ if(e.target.id==="submitModal") e.currentTarget.classList.remove("open"); };
 
 loadRecipes();
+
+/* ---- PWA: offline shell + install walkthrough ---- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
 </script>
+<script src="install-gate.js" defer></script>
 </body>
 </html>
