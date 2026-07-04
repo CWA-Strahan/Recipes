@@ -1,6 +1,6 @@
 /* CWA Strahan Recipes — service worker
    Bump CACHE_VERSION whenever index.html or the icons change. */
-const CACHE_VERSION = "cwa-recipes-v2";
+const CACHE_VERSION = "cwa-recipes-v3";
 const SHELL = [
   "./",
   "./index.html",
@@ -9,7 +9,8 @@ const SHELL = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
-  "./icons/favicon-32.png"
+  "./icons/favicon-32.png",
+  "./icons/emblem.png"
 ];
 
 self.addEventListener("install", (e) => {

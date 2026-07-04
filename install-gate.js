@@ -1,169 +1,725 @@
-/* install-gate.js — CWA Strahan Recipes
-   A gentle "put this on your home screen" walkthrough, aimed at readers
-   who have never installed a web app before.
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2E5A38">
+<title>CWA Strahan Branch · Recipe Collection</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CWA Recipes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E4; --paper2:#FBF8EF; --ink:#2A2925; --muted:#6E6A5E;
+    --green:#2E5A38; --green-d:#21472B; --red:#A22F2B; --red-d:#7C221F;
+    --gold:#C29A45; --line:#DED3B8; --line-soft:#E9E1CC;
+    --shadow:0 1px 0 #fff inset, 0 2px 10px rgba(42,41,37,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Nunito Sans",system-ui,sans-serif; font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.disp{font-family:"Fraunces",Georgia,serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 18px}
 
-   - Already installed → does nothing, ever.
-   - Android/Chrome    → warm card, Install button fires the real native prompt.
-   - iPhone/iPad Safari→ card, then a big-type 3-step Add-to-Home-Screen guide.
-   - "Not now"         → quiet for 14 days.
-   All styles prefixed ig- so nothing fights the app CSS. */
+  /* ---- Masthead ---- */
+  .masthead{
+    background:
+      radial-gradient(120% 140% at 50% -40%, rgba(255,255,255,.35), transparent 60%),
+      linear-gradient(180deg,var(--green),var(--green-d));
+    color:#F3EFE2; border-bottom:4px solid var(--gold);
+  }
+  .crest{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 18px 30px}
+  .emblem{
+    width:88px;height:88px;border-radius:50%;
+    margin-bottom:12px;
+    filter:drop-shadow(0 3px 10px rgba(0,0,0,.3));
+  }
+  .emblem img{width:100%;height:100%;display:block}
+  .eyebrow{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:#E7DFC7;opacity:.9;margin:0 0 4px}
+  .masthead h1{margin:2px 0 2px;font-weight:600;font-size:clamp(30px,6vw,46px);letter-spacing:.5px;line-height:1.02;color:#FCF9EF}
+  .masthead .sub{font-size:15px;color:#E7DFC7;margin:0}
+  .motto{margin-top:12px;font-family:"Fraunces",serif;font-style:italic;font-size:14px;color:#EBE3CC;opacity:.92}
 
-(function () {
-  "use strict";
+  /* ---- Controls ---- */
+  .bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+  .bar-inner{display:flex;gap:10px;align-items:center;padding:12px 0;flex-wrap:wrap}
+  .search{flex:1 1 220px;min-width:180px;position:relative}
+  .search input{width:100%;padding:10px 12px 10px 34px;border:1px solid var(--line);background:var(--paper2);border-radius:8px;font:inherit;color:var(--ink)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--paper2);color:var(--muted);padding:7px 12px;border-radius:20px;font:inherit;font-size:13.5px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .chip:hover{border-color:var(--green)}
+  .chip[aria-pressed="true"]{background:var(--green);color:#F3EFE2;border-color:var(--green)}
+  .btn-submit{border:1px solid var(--red);background:var(--red);color:#FCF7EE;padding:9px 14px;border-radius:8px;font:inherit;font-weight:700;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+  .btn-submit:hover{background:var(--red-d)}
 
-  var APP_NAME = "CWA Recipes";
-  var DISMISS_DAYS = 14;
-  var KEY = "cwa-install-gate";
+  /* ---- Grid ---- */
+  .section-label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .card{background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;cursor:pointer;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:transform .12s, box-shadow .12s}
+  .card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(42,41,37,.10)}
+  .card.feat{grid-column:1/-1;border:1px solid var(--gold);background:linear-gradient(180deg,#FCF9F0,#FBF6EA)}
+  .feat-body{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+  .card .cat{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:6px}
+  .card h3{margin:0 0 8px;font-size:22px;font-weight:600;line-height:1.1}
+  .card.feat h3{font-size:30px}
+  .card .by{font-size:13.5px;color:var(--muted)}
+  .card .by b{color:var(--ink);font-weight:700}
+  .feat-banner{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--red);color:#FCF7EE;font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:8px 12px;margin:-16px -16px 16px;border-radius:11px 11px 0 0;border-bottom:2px solid var(--gold)}
+  .feat-banner::before,.feat-banner::after{content:"✦";font-size:11px;color:var(--gold)}
+  .avatar{width:84px;height:84px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:"Fraunces",serif;font-weight:600;font-size:30px;color:#FCF9EF;border:2px solid var(--gold);overflow:hidden}
+  .card.feat .avatar{width:104px;height:104px;font-size:38px}
+  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .meta-row{font-size:12.5px;color:var(--muted);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap}
+  .status{font-size:12px;color:var(--muted);text-align:center;padding:10px 0 0}
+  .status b{color:var(--green-d)}
 
-  /* ---------- state ---------- */
-  var standalone =
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true;
-  if (standalone) return;
+  /* ---- Detail ---- */
+  .detail{display:none}
+  body.viewing .listing{display:none}
+  body.viewing .detail{display:block}
+  .back{background:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:center;margin:16px 0}
+  .back:hover{background:var(--paper2)}
+  .r-head{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px}
+  .r-head .avatar{width:72px;height:72px;font-size:26px}
+  .r-title h2{margin:0;font-size:clamp(26px,5vw,38px);font-weight:600;line-height:1.05}
+  .r-title .cat{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:700}
+  .story{background:var(--paper2);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 16px;margin:14px 0;font-family:"Fraunces",serif;font-style:italic;font-size:16px;color:#413f38;line-height:1.5}
+  .story .who{display:block;font-style:normal;font-family:"Nunito Sans",sans-serif;font-size:13px;letter-spacing:.04em;color:var(--muted);margin-top:8px}
+  .story .who b{color:var(--ink)}
 
-  var state = {};
-  try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
-  if (state.installed) return;
-  if (state.dismissedAt && Date.now() - state.dismissedAt < DISMISS_DAYS * 864e5) return;
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:16px 0 22px}
+  .ctl label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+  .toggle button{border:none;background:none;font:inherit;padding:8px 14px;cursor:pointer;color:var(--muted)}
+  .toggle button[aria-pressed="true"]{background:var(--green);color:#F3EFE2;font-weight:700}
+  .steppers{display:flex;gap:6px;flex-wrap:wrap}
+  .mult{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;min-width:44px}
+  .mult[aria-pressed="true"]{background:var(--red);color:#FCF7EE;border-color:var(--red);font-weight:700}
+  .makes{margin-left:auto;text-align:right}
+  .makes .n{font-family:"Fraunces",serif;font-size:24px;font-weight:600;color:var(--green-d)}
+  .makes small{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
-  var ua = navigator.userAgent;
-  var isIOS = /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  var isIPad = /iPad/.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  var iosNotSafari = isIOS && /CriOS|FxiOS|EdgiOS/.test(ua);
+  .cols{display:grid;grid-template-columns:1fr 1.3fr;gap:30px}
+  @media(max-width:720px){.cols{grid-template-columns:1fr;gap:8px}.feat-body{grid-template-columns:1fr;text-align:center;justify-items:center}.makes{margin-left:0}}
+  .panel h3{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-family:"Nunito Sans",sans-serif;font-weight:700;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  ul.ing{list-style:none;margin:0;padding:0}
+  ul.ing li{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line-soft);cursor:pointer;align-items:baseline}
+  ul.ing .tick{width:16px;height:16px;border:1.5px solid var(--green);border-radius:4px;flex:none;display:grid;place-items:center;margin-top:2px}
+  ul.ing li.done{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+  ul.ing li.done .tick{background:var(--green)}
+  ul.ing li.done .tick::after{content:"✓";color:#fff;font-size:11px}
+  .qty{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink);white-space:nowrap}
+  li.done .qty{color:var(--muted)}
+  ol.method{margin:0;padding:0;counter-reset:step;list-style:none}
+  ol.method li{position:relative;padding:4px 0 16px 42px;counter-increment:step;cursor:pointer}
+  ol.method li::before{content:counter(step);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--green);color:#F3EFE2;display:grid;place-items:center;font-family:"Fraunces",serif;font-weight:600;font-size:14px}
+  ol.method li.done{color:var(--muted)}
+  ol.method li.done::before{background:var(--line);color:#fff}
+  .oven{display:inline-flex;gap:16px;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:14px}
+  .oven b{color:var(--green-d)}
+  .notes{background:#FBF6E9;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:22px}
+  .notes h3{color:var(--red-d);border:none;padding:0;margin:0 0 6px;font-size:13px;letter-spacing:.14em}
+  .notes p{margin:0;font-size:14.5px;color:#4a473e}
+  .print-btn{border:1px solid var(--green);background:#fff;color:var(--green-d);padding:10px 16px;border-radius:8px;font:inherit;font-weight:700;cursor:pointer;display:inline-flex;gap:7px;align-items:center;margin-top:8px}
+  .print-btn:hover{background:var(--green);color:#F3EFE2}
 
-  var deferredPrompt = null, banner = null, sheet = null;
+  /* ---- Submit modal ---- */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(33,32,28,.5);z-index:50;align-items:center;justify-content:center;padding:18px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--paper);border-radius:14px;max-width:480px;width:100%;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.3);padding:24px}
+  .modal h2{margin:0 0 4px;font-size:26px;font-weight:600}
+  .modal p{color:var(--muted);font-size:14.5px;margin:8px 0}
+  .modal ol{padding-left:18px;color:#4a473e;font-size:14.5px}
+  .modal .go{display:block;text-align:center;background:var(--red);color:#FCF7EE;text-decoration:none;font-weight:700;padding:12px;border-radius:8px;margin-top:14px}
+  .modal .close{float:right;border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
 
-  /* ---------- styles ---------- */
-  var css =
-    ".ig-banner{position:fixed;left:12px;right:12px;bottom:12px;z-index:9000;" +
-      "background:#FBF8EF;border:2px solid #C29A45;border-radius:14px;" +
-      "box-shadow:0 8px 30px rgba(42,41,37,.25);padding:16px;" +
-      "font-family:'Nunito Sans',system-ui,sans-serif;color:#2A2925;" +
-      "max-width:430px;margin:0 auto;font-size:17px;line-height:1.45}" +
-    ".ig-banner h4{margin:0 0 6px;font-family:Georgia,serif;font-size:20px;color:#21472B}" +
-    ".ig-banner p{margin:0 0 12px}" +
-    ".ig-row{display:flex;gap:10px}" +
-    ".ig-btn{flex:1;border:none;border-radius:10px;padding:14px;font:inherit;" +
-      "font-weight:700;cursor:pointer;min-height:50px}" +
-    ".ig-yes{background:#2E5A38;color:#F3EFE2}" +
-    ".ig-no{background:none;border:1.5px solid #DED3B8;color:#6E6A5E}" +
-    ".ig-sheet{position:fixed;inset:0;z-index:9100;background:rgba(33,32,28,.55);" +
-      "display:flex;align-items:flex-end;justify-content:center}" +
-    ".ig-card{background:#F6F1E4;border-radius:18px 18px 0 0;max-width:480px;width:100%;" +
-      "padding:22px 20px 30px;font-family:'Nunito Sans',system-ui,sans-serif;" +
-      "color:#2A2925;font-size:18px;line-height:1.5;max-height:85vh;overflow:auto}" +
-    ".ig-card h3{margin:0 0 14px;font-family:Georgia,serif;font-size:23px;color:#21472B}" +
-    ".ig-step{display:flex;gap:14px;margin:0 0 16px;align-items:flex-start}" +
-    ".ig-num{flex:none;width:34px;height:34px;border-radius:50%;background:#2E5A38;" +
-      "color:#F3EFE2;display:flex;align-items:center;justify-content:center;" +
-      "font-weight:700;font-size:17px}" +
-    ".ig-hint{font-size:15px;color:#6E6A5E;margin-top:4px}" +
-    ".ig-glyph{display:inline-block;vertical-align:-4px;margin:0 2px}" +
-    ".ig-done{width:100%;border:none;border-radius:10px;padding:15px;font:inherit;" +
-      "font-weight:700;background:#2E5A38;color:#F3EFE2;min-height:52px;cursor:pointer}" +
-    "@media (prefers-reduced-motion:no-preference){" +
-      ".ig-banner{animation:ig-up .35s ease}" +
-      "@keyframes ig-up{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}}";
+  footer{border-top:1px solid var(--line);margin-top:50px;padding:22px 0 40px;color:var(--muted);font-size:13px;text-align:center}
+  footer .disp{color:var(--green-d);font-size:16px}
 
-  function injectStyles() {
-    if (document.getElementById("ig-styles")) return;
-    var s = document.createElement("style");
-    s.id = "ig-styles"; s.textContent = css;
-    document.head.appendChild(s);
+  /* ---- Print ---- */
+  .print-head,.print-foot,.print-batch{display:none}
+  @media print{
+    .bar,.masthead,.back,.controls,.print-btn,.section-label,footer,.modal-bg,.status,.r-head .avatar{display:none!important}
+    body{background:#fff;font-size:11.5pt;color:#1e1d1a}
+    @page{margin:16mm 16mm 22mm}
+    .print-head{display:block;text-align:center;border-bottom:3px double var(--gold);padding-bottom:10px;margin-bottom:16px}
+    .print-head .ph-logo{width:58px;height:58px;border-radius:50%;display:inline-block;margin-bottom:6px}
+    .print-head .ph-org{font-size:9.5pt;letter-spacing:.22em;text-transform:uppercase;color:var(--green-d);margin:0}
+    .print-head .ph-branch{font-family:"Fraunces",Georgia,serif;font-size:24pt;font-weight:600;color:var(--green-d);margin:2px 0}
+    .print-head .ph-sub{font-size:9.5pt;color:#6E6A5E;margin:0;font-style:italic}
+    .print-foot{display:block;position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:8.5pt;color:#6E6A5E;border-top:1px solid var(--gold);padding-top:4px;background:#fff}
+    .print-batch{display:block;font-size:10.5pt;color:#41403a;margin:0 0 10px;font-style:italic}
+    .cols{grid-template-columns:1fr 1.4fr;gap:24px}
+    .story,.notes,.oven{break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    ul.ing li,ol.method li{break-inside:avoid}
+    ol.method li::before{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .panel h3{break-after:avoid}
+    .r-title h2{font-size:24pt}
+    .r-title .cat{color:var(--green-d)}
+    p,li{orphans:3;widows:3}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="crest">
+    <div class="emblem"><img src="icons/emblem.png" alt="CWA Strahan Branch"></div>
+    <p class="eyebrow">Country Women's Association in Tasmania</p>
+    <h1>Strahan Branch</h1>
+    <p class="sub">Recipe Collection · from our kitchens to yours</p>
+    <p class="motto">Through Countrywomen, For Countrywomen, By Countrywomen</p>
+  </div>
+</header>
+
+<div class="listing">
+  <div class="bar">
+    <div class="wrap bar-inner">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input id="q" type="search" placeholder="Search recipes or bakers…" aria-label="Search">
+      </div>
+      <div class="chips" id="chips"></div>
+      <button class="btn-submit" id="openSubmit">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        Submit a recipe
+      </button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="feature-wrap"></div>
+    <div class="section-label" id="lib-label">The collection</div>
+    <div class="grid" id="grid"><p style="color:var(--muted)">Loading the recipe book…</p></div>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<div class="detail">
+  <div class="wrap">
+    <button class="back" id="back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to the collection
+    </button>
+    <div class="print-head">
+      <img class="ph-logo" src="icons/emblem.png" alt="">
+      <p class="ph-org">Country Women's Association in Tasmania</p>
+      <p class="ph-branch">Strahan Branch</p>
+      <p class="ph-sub">Recipe Collection · from our kitchens to yours</p>
+    </div>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="submitModal">
+  <div class="modal">
+    <button class="close" id="closeSubmit" aria-label="Close">×</button>
+    <h2>Share your recipe</h2>
+    <p>Your recipe goes to the branch for a look — it isn't published straight away.</p>
+    <ol>
+      <li>Fill in the form (title, your name, a few lines of story, ingredients, method, and a photo if you'd like).</li>
+      <li>The branch reviews submissions.</li>
+      <li>The ones chosen are added here — and one becomes <b>Recipe of the Month</b>.</li>
+    </ol>
+    <a class="go" id="formLink" href="#" target="_blank" rel="noopener">Open the recipe form →</a>
+    <p style="font-size:12.5px;margin-top:12px">Photos are optional. Sharing your name and photo is entirely your choice.</p>
+  </div>
+</div>
+
+<div class="print-foot">CWA Strahan Branch Recipe Collection · Strahan Recreation Hall, Gaffney Street, Strahan</div>
+
+<footer class="wrap">
+  <span class="disp">CWA Strahan Branch</span><br>
+  CWA Rooms, Strahan Recreation Hall, Gaffney Street, Strahan · 2nd Wednesday monthly<br>
+  <span style="font-size:12px">Every recipe is reviewed by the branch before it appears here. This app keeps nothing about you — no accounts, no sign-in, no tracking.</span>
+</footer>
+
+<script>
+/* =========================================================================
+   CONFIG — the only two lines you edit.
+   1. FORM_URL: the Google Form share link (Send → link icon).
+   2. SHEET_CSV_URL: File → Share → Publish to web → select the
+      "Published" TAB ONLY → CSV → copy link. Leave "" to run demo data.
+   ========================================================================= */
+const CONFIG = {
+  FORM_URL: "https://forms.gle/REPLACE-ME",
+  SHEET_CSV_URL: ""
+};
+
+/* =========================================================================
+   INGREDIENT ENGINE
+   Parses free-text lines ("125 g butter", "½ cup caster sugar",
+   "4 large eggs", "pinch of salt") into {qty, unit, name}, scales them,
+   and converts metric ⇄ cups using AUSTRALIAN measures:
+   1 cup = 250 ml · 1 tbsp = 20 ml · 1 tsp = 5 ml.
+   Cup⇄gram conversion uses a density table (g per AU cup) for common
+   country-baking ingredients. Anything unrecognised displays as written —
+   never wrong, just unconverted. Spoon measures stay spoons in both views.
+   ========================================================================= */
+const UNI_FRac = {"¼":.25,"½":.5,"¾":.75,"⅓":1/3,"⅔":2/3,"⅛":.125,"⅜":.375,"⅝":.625,"⅞":.875};
+const UNIT_WORDS = {
+  g:["g","gram","grams","gm"], kg:["kg","kilo","kilos"],
+  ml:["ml","mls"], l:["l","litre","litres","liter"],
+  tsp:["tsp","teaspoon","teaspoons"], tbsp:["tbsp","tablespoon","tablespoons","tbs"],
+  cup:["cup","cups"], pinch:["pinch","pinches"]
+};
+const WORD2UNIT = {}; for(const u in UNIT_WORDS) UNIT_WORDS[u].forEach(w=>WORD2UNIT[w]=u);
+
+// grams per AU 250 ml cup — most specific names first
+const DENSITY = [
+  ["self-raising flour",150],["self raising flour",150],["sr flour",150],
+  ["cornflour",130],["cocoa",100],["plain flour",150],["flour",150],
+  ["icing sugar",160],["caster sugar",220],["brown sugar",200],["raw sugar",220],["sugar",220],
+  ["butter",250],["margarine",250],["copha",250],
+  ["desiccated coconut",90],["shredded coconut",70],["coconut",90],
+  ["rolled oats",90],["oats",90],["rice bubbles",30],["cornflakes",40],
+  ["golden syrup",350],["treacle",350],["honey",350],["jam",320],
+  ["condensed milk",320],
+  ["sultanas",160],["raisins",170],["currants",150],["mixed fruit",160],["dates",155],
+  ["walnuts",100],["pecans",100],["almond meal",100],["almonds",160],
+  ["biscuit",120],["breadcrumbs",100],
+  ["milk",250],["water",250],["cream",250],["juice",250],["buttermilk",250]
+];
+function densityFor(name){
+  const n = name.toLowerCase();
+  for(const [k,d] of DENSITY) if(n.includes(k)) return d;
+  return null;
+}
+function parseQty(str){
+  // returns [qty|null, restOfString]
+  let s = str.trim(), qty = 0, matched = false;
+  const m = s.match(/^(\d+)?\s*([¼½¾⅓⅔⅛⅜⅝⅞])/);
+  if(m){ qty = (m[1]?+m[1]:0) + UNI_FRac[m[2]]; return [qty, s.slice(m[0].length)]; }
+  const f = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)/);      // 1 1/2
+  if(f){ return [+f[1] + (+f[2]/+f[3]), s.slice(f[0].length)]; }
+  const g = s.match(/^(\d+)\s*\/\s*(\d+)/);              // 1/2
+  if(g){ return [+g[1]/+g[2], s.slice(g[0].length)]; }
+  const d = s.match(/^(\d+(?:\.\d+)?)/);                 // 2, 2.5
+  if(d){ return [+d[1], s.slice(d[0].length)]; }
+  return [null, s];
+}
+function parseLine(raw){
+  let [qty, rest] = parseQty(raw);
+  rest = rest.replace(/^\s+/,"");
+  let unit = null;
+  const um = rest.match(/^([A-Za-z]+)\.?\s+/);
+  if(um && WORD2UNIT[um[1].toLowerCase()]){
+    unit = WORD2UNIT[um[1].toLowerCase()];
+    rest = rest.slice(um[0].length);
+  }
+  if(unit==="pinch" && qty===null) qty = 1;             // "pinch of salt"
+  rest = rest.replace(/^of\s+/i,"");
+  return { qty, unit, name: rest.trim() || raw.trim(), raw: raw.trim() };
+}
+
+const FRAC=[[0,""],[.125,"⅛"],[.25,"¼"],[.333,"⅓"],[.375,"⅜"],[.5,"½"],[.625,"⅝"],[.666,"⅔"],[.75,"¾"],[.875,"⅞"],[1,""]];
+function pretty(x){
+  if(x<=0) return "0";
+  const whole=Math.floor(x), frac=x-whole;
+  let best=FRAC[0], bd=Infinity;
+  for(const m of FRAC){const d=Math.abs(frac-m[0]); if(d<bd){bd=d;best=m;}}
+  if(best[0]===1) return String(whole+1);
+  if(best[0]===0) return whole ? String(whole) : (+x.toFixed(2)).toString();
+  return whole ? whole+best[1] : best[1];
+}
+function roundMetric(x){
+  if(x<20) return Math.round(x*2)/2;
+  if(x<100) return Math.round(x/5)*5;
+  return Math.round(x/10)*10;
+}
+function fmtIng(ing, system, mult){
+  if(ing.qty===null) return { num:"", name: ing.raw };   // unparsable → show as written
+  const q = ing.qty * mult;
+  let unit = ing.unit;
+
+  // countable items, spoons, pinches: identical in both systems
+  if(unit===null)   return { num: pretty(q), name: ing.name };
+  if(unit==="tsp")  return { num: pretty(q)+" tsp",  name: ing.name };
+  if(unit==="tbsp") return { num: pretty(q)+" tbsp", name: ing.name };
+  if(unit==="pinch")return { num: (q===1?"pinch":pretty(q)+" pinches"), name: ing.name, pinch:true };
+
+  // normalise
+  let grams = null, mls = null;
+  if(unit==="g")  grams=q;
+  if(unit==="kg") grams=q*1000;
+  if(unit==="ml") mls=q;
+  if(unit==="l")  mls=q*1000;
+  if(unit==="cup"){
+    const d = densityFor(ing.name);
+    if(d!==null && d!==250) grams=q*d; else mls=q*250;
   }
 
-  var GLYPH_SHARE =
-    '<svg class="ig-glyph" width="20" height="24" viewBox="0 0 20 24" fill="none" ' +
-    'stroke="#2E5A38" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M10 14V2M6 6l4-4 4 4"/><path d="M4 10H3v12h14V10h-1"/></svg>';
-  var GLYPH_ADD =
-    '<svg class="ig-glyph" width="20" height="20" viewBox="0 0 20 20" fill="none" ' +
-    'stroke="#2E5A38" stroke-width="1.8" stroke-linecap="round">' +
-    '<rect x="1.5" y="1.5" width="17" height="17" rx="4"/><path d="M10 6v8M6 10h8"/></svg>';
-
-  /* ---------- banner ---------- */
-  function showBanner(kind) {
-    if (banner) return;
-    injectStyles();
-    banner = document.createElement("div");
-    banner.className = "ig-banner";
-    banner.setAttribute("role", "dialog");
-    banner.innerHTML =
-      "<h4>Keep " + APP_NAME + " handy</h4>" +
-      "<p>Add it to your home screen and it opens like any other app — recipe book always in your pocket.</p>" +
-      '<div class="ig-row">' +
-      '<button class="ig-btn ig-yes">' + (kind === "android" ? "Install" : "Show me how") + "</button>" +
-      '<button class="ig-btn ig-no">Not now</button></div>';
-    document.body.appendChild(banner);
-
-    banner.querySelector(".ig-no").onclick = function () {
-      state.dismissedAt = Date.now(); save(); removeBanner();
-    };
-    banner.querySelector(".ig-yes").onclick = function () {
-      if (kind === "android" && deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function (choice) {
-          deferredPrompt = null;
-          if (!(choice && choice.outcome === "accepted")) {
-            state.dismissedAt = Date.now(); save();
-          }
-          removeBanner();
-        });
-      } else {
-        showIOSSheet();
-      }
-    };
-  }
-  function removeBanner() { if (banner) { banner.remove(); banner = null; } }
-
-  /* ---------- iOS walkthrough ---------- */
-  function showIOSSheet() {
-    if (sheet) return;
-    injectStyles();
-    var where = isIPad
-      ? "in the <b>top corner</b> of the screen"
-      : "at the <b>bottom</b> of the screen";
-    var steps = [];
-    if (iosNotSafari) {
-      steps.push("First, open this page in <b>Safari</b> (the blue compass icon), then follow these steps there.");
+  if(system==="metric"){
+    if(grams!==null) return { num: roundMetric(grams)+" g",  name: ing.name };
+    if(mls!==null)   return { num: roundMetric(mls)+" ml",   name: ing.name };
+  } else { // cups view
+    if(mls!==null){
+      if(mls>=60) return { num: pretty(mls/250)+" cup"+(mls/250>1.01?"s":""), name: ing.name };
+      if(mls>=15) return { num: pretty(mls/20)+" tbsp", name: ing.name };
+      return { num: pretty(mls/5)+" tsp", name: ing.name };
     }
-    steps.push("Tap the <b>Share</b> button " + GLYPH_SHARE + " " + where + "." +
-      '<div class="ig-hint">It looks like a square with an arrow pointing up.</div>');
-    steps.push("Scroll down the list and tap <b>Add to Home Screen</b> " + GLYPH_ADD + ".");
-    steps.push("Tap <b>Add</b> in the top corner. Done — look for the CWA recipe-book icon.");
-
-    sheet = document.createElement("div");
-    sheet.className = "ig-sheet";
-    sheet.innerHTML =
-      '<div class="ig-card"><h3>Add ' + APP_NAME + " to your home screen</h3>" +
-      steps.map(function (s, i) {
-        return '<div class="ig-step"><div class="ig-num">' + (i + 1) + "</div><div>" + s + "</div></div>";
-      }).join("") +
-      '<button class="ig-done">Got it</button></div>';
-    document.body.appendChild(sheet);
-    sheet.querySelector(".ig-done").onclick = function () {
-      state.dismissedAt = Date.now(); save();
-      sheet.remove(); sheet = null; removeBanner();
-    };
-    sheet.onclick = function (e) { if (e.target === sheet) sheet.querySelector(".ig-done").click(); };
+    if(grams!==null){
+      const d = densityFor(ing.name);
+      if(d){
+        const cups = grams/d;
+        if(cups>=0.2) return { num: pretty(cups)+" cup"+(cups>1.01?"s":""), name: ing.name };
+        const tbsp = cups*12.5;                       // 1 cup = 12.5 AU tbsp
+        if(tbsp>=0.45) return { num: pretty(tbsp)+" tbsp", name: ing.name };
+      }
+      return { num: roundMetric(grams)+" g", name: ing.name };  // no conversion known
+    }
   }
+  return { num:"", name: ing.raw };
+}
+function scaledMakes(makesText, mult){
+  const m = makesText.match(/^(\d+(?:\.\d+)?)(.*)$/);
+  if(!m) return makesText;
+  return pretty(+m[1]*mult) + m[2];
+}
 
-  /* ---------- wiring ---------- */
-  window.addEventListener("beforeinstallprompt", function (e) {
-    e.preventDefault();
-    deferredPrompt = e;
-    setTimeout(function () { showBanner("android"); }, 1200);
-  });
-
-  window.addEventListener("appinstalled", function () {
-    state.installed = true; state.dismissedAt = null; save();
-    removeBanner(); if (sheet) { sheet.remove(); sheet = null; }
-  });
-
-  if (isIOS) {
-    setTimeout(function () { showBanner("ios"); }, 1200);
+/* =========================================================================
+   DATA LOADING
+   Live mode: fetch the published "Published" tab as CSV, map by header.
+   Cache last good copy in localStorage so the kitchen survives bad signal.
+   Demo mode: built-in classics, run through the same parser.
+   ========================================================================= */
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else inQ=false; }
+      else cur+=c;
+    } else {
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(cur); cur=""; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if(c!=='\r') cur+=c;
+    }
   }
-})();
+  if(cur.length||row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=>r.some(c=>c.trim()!==""));
+}
+function headerIndex(headers){
+  const h = headers.map(x=>x.toLowerCase());
+  const find = (...keys)=>h.findIndex(col=>keys.some(k=>col.includes(k)));
+  return {
+    title: find("title"), category: find("category"),
+    name: find("your name","name"), story: find("story"),
+    units: find("measurement"), makes: find("makes","serves"),
+    oven: find("oven"), ingredients: find("ingredient"),
+    method: find("method"), notes: find("baker"),
+    feature: find("feature","month"), photo: find("photo url")
+  };
+}
+function driveImg(u){
+  if(!u) return null;
+  const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
+  return m ? "https://drive.google.com/thumbnail?id="+m[1]+"&sz=w400" : u;
+}
+function rowsToRecipes(rows){
+  const idx = headerIndex(rows[0]);
+  const get = (r,i)=> i>=0 && r[i]!==undefined ? r[i].trim() : "";
+  const list = [];
+  rows.slice(1).forEach((r,n)=>{
+    const title = get(r,idx.title); if(!title) return;
+    list.push({
+      id: "r"+n,
+      title, category: get(r,idx.category)||"Recipes",
+      featured: /^true$/i.test(get(r,idx.feature)),
+      submitter: {
+        name: get(r,idx.name) || "a Strahan Branch member",
+        story: get(r,idx.story),
+        photo: driveImg(get(r,idx.photo)) || null
+      },
+      makes: get(r,idx.makes) || "",
+      oven: (()=>{ const o=parseInt(get(r,idx.oven)); return isNaN(o)?null:o; })(),
+      ingredients: get(r,idx.ingredients).split(/\n/).map(s=>s.trim()).filter(Boolean).map(parseLine),
+      method: get(r,idx.method).split(/\n/).map(s=>s.trim()).filter(Boolean),
+      notes: get(r,idx.notes)
+    });
+  });
+  // newest submission wins Recipe of the Month if several are ticked
+  let seen=false;
+  for(let i=list.length-1;i>=0;i--){
+    if(list[i].featured){ if(seen) list[i].featured=false; seen=true; }
+  }
+  return list;
+}
+
+const DEMO = [
+  {
+    id:"sponge", title:"Never-Fail Sponge", category:"Sponges", featured:true,
+    submitter:{ name:"Beryl Hargreaves", photo:null,
+      story:"My mother's sponge won the Zeehan show three years running, and the only secret she ever gave up was to sift the dry things three times and never, ever peek in the oven. I've made it for every branch afternoon tea for the last twenty years." },
+    makes:"1 sponge sandwich (two 20 cm layers)", oven:180,
+    ingredients:["4 large eggs","165 g caster sugar","90 g cornflour","30 g plain flour","1 tsp cream of tartar","1/2 tsp bicarbonate of soda","pinch of salt"].map(parseLine),
+    method:[
+      "Grease and line the bases of two 20 cm sandwich tins. Heat the oven.",
+      "Beat the eggs until pale and thick, then add the sugar a spoonful at a time, beating until the mixture holds a ribbon when the beater is lifted — a good five minutes.",
+      "Sift the cornflour, plain flour, cream of tartar, bicarb and salt together three times.",
+      "Sift the dry mix over the eggs and fold through gently with a metal spoon — keep the air in.",
+      "Divide between the tins and bake 18–20 minutes, until the tops spring back to a light touch. Don't open the door in the first 15 minutes.",
+      "Turn onto a rack to cool, then sandwich with jam and whipped cream and dust with icing sugar."],
+    notes:"A doubled mixture will not rise well in one tin — bake the layers separately. Everything colder rises higher: chilled bowl, chilled beaters."
+  },
+  {
+    id:"lemonslice", title:"Lemon Coconut Slice", category:"Slices", featured:false,
+    submitter:{ name:"Marjorie Pike", photo:null,
+      story:"This is the one that always sells out first at the street stall. No oven, which suits a hot day, and it keeps a good week in the fridge — if it lasts that long." },
+    makes:"20 pieces (20 × 30 cm tin)", oven:null,
+    ingredients:["250 g plain sweet biscuits, crushed","45 g desiccated coconut","200 g sweetened condensed milk","125 g butter, melted","1 lemon, zest finely grated","240 g icing sugar","30 ml lemon juice","1 tbsp butter, softened, extra"].map(parseLine),
+    method:[
+      "Line a slice tin with baking paper, leaving an overhang on the long sides to lift it out later.",
+      "Mix the crushed biscuits, coconut and lemon zest. Stir in the condensed milk and melted butter until it clumps together.",
+      "Press firmly and evenly into the tin. Chill for 30 minutes while you make the icing.",
+      "Beat the icing sugar, lemon juice and extra butter until smooth and spreadable — add a few drops more juice if stiff.",
+      "Spread over the chilled base, scatter with a little extra coconut, and return to the fridge until set.",
+      "Lift out by the paper and cut into fingers. A knife dipped in hot water gives clean edges."],
+    notes:"Keeps a week in an airtight container in the fridge. For a sharper hit, add the zest to the icing as well as the base."
+  },
+  {
+    id:"anzac", title:"Anzac Biscuits", category:"Biscuits", featured:false,
+    submitter:{ name:"Edna Fields", photo:null,
+      story:"My grandfather came home on the Nairana and Anzac Day was never without a tin of these. Chewy or crunchy is the great family argument — bake them a few minutes longer for crunch." },
+    makes:"24 biscuits", oven:160,
+    ingredients:["90 g rolled oats","110 g plain flour","70 g desiccated coconut","100 g brown sugar","125 g butter","2 tbsp golden syrup","1/2 tsp bicarbonate of soda","1 tbsp boiling water"].map(parseLine),
+    method:[
+      "Line two trays with baking paper and heat the oven.",
+      "Stir the oats, flour, coconut and brown sugar together in a large bowl.",
+      "Melt the butter with the golden syrup in a saucepan over low heat.",
+      "Mix the bicarb into the boiling water, then stir it into the butter — it will foam. Pour into the dry ingredients and mix well.",
+      "Roll heaped teaspoons into balls, set well apart on the trays and flatten slightly.",
+      "Bake 12–15 minutes until golden. Leave on the tray to firm up before lifting — they crisp as they cool."],
+    notes:"For chewy biscuits, pull them at 12 minutes; for crunchy, give them 15–16. They keep a fortnight in a tin."
+  }
+];
+
+let RECIPES = [];
+async function loadRecipes(){
+  const status = document.getElementById("status");
+  if(!CONFIG.SHEET_CSV_URL){
+    RECIPES = DEMO;
+    status.innerHTML = "Demo recipes shown — connect the branch recipe book in <b>CONFIG</b> to go live.";
+    boot(); return;
+  }
+  try{
+    const res = await fetch(CONFIG.SHEET_CSV_URL, {cache:"no-store"});
+    if(!res.ok) throw new Error(res.status);
+    const text = await res.text();
+    localStorage.setItem("cwa-recipes-csv", text);
+    RECIPES = rowsToRecipes(parseCSV(text));
+    status.innerHTML = "Live from the <b>branch recipe book</b> · "+RECIPES.length+" recipes";
+  }catch(e){
+    const cached = localStorage.getItem("cwa-recipes-csv");
+    if(cached){
+      RECIPES = rowsToRecipes(parseCSV(cached));
+      status.innerHTML = "Offline — showing your last saved copy of the recipe book.";
+    } else {
+      RECIPES = DEMO;
+      status.innerHTML = "Couldn't reach the recipe book — demo recipes shown.";
+    }
+  }
+  boot();
+}
+
+/* =========================================================================
+   UI
+   ========================================================================= */
+let S = { cat:"All", q:"", unit:"metric", mult:1, current:null };
+let CATS = [];
+const colours = ["#2E5A38","#A22F2B","#7C221F","#21472B","#8a5a2b"];
+
+function avatarFor(sub, i){
+  if(sub.photo) return `<span class="avatar"><img src="${sub.photo}" alt="" onerror="this.parentNode.textContent='${initials(sub.name)}';this.parentNode.style.background='${colours[i%colours.length]}'"></span>`;
+  return `<span class="avatar" style="background:${colours[i%colours.length]}">${initials(sub.name)}</span>`;
+}
+function initials(name){ return name.split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase(); }
+
+function renderChips(){
+  document.getElementById("chips").innerHTML = CATS.map(c=>
+    `<button class="chip" data-cat="${c}" aria-pressed="${S.cat===c}">${c}</button>`).join("");
+}
+function matches(r){
+  const okCat = S.cat==="All" || r.category===S.cat;
+  const q = S.q.toLowerCase().trim();
+  return okCat && (!q || r.title.toLowerCase().includes(q) || r.submitter.name.toLowerCase().includes(q));
+}
+function renderList(){
+  const feat = RECIPES.find(r=>r.featured && matches(r));
+  const rest = RECIPES.filter(r=>matches(r) && !(feat && r.id===feat.id));
+  const fw = document.getElementById("feature-wrap");
+  if(feat){
+    const i = RECIPES.indexOf(feat);
+    fw.innerHTML = `<div class="card feat" data-id="${feat.id}">
+      <div class="feat-banner">Recipe of the Month</div>
+      <div class="feat-body">
+      ${avatarFor(feat.submitter,i)}
+      <div>
+        <div class="cat">${feat.category}</div>
+        <h3>${feat.title}</h3>
+        <div class="by">from the kitchen of <b>${feat.submitter.name}</b></div>
+        <div class="meta-row">
+          ${feat.makes?`<span>◷ makes ${feat.makes}</span>`:""}
+          ${feat.oven?`<span>◉ ${feat.oven}°C oven</span>`:`<span>❄ no-bake</span>`}
+        </div>
+      </div></div></div>`;
+  } else fw.innerHTML="";
+
+  document.getElementById("grid").innerHTML = rest.map(r=>{
+    const i = RECIPES.indexOf(r);
+    return `<div class="card" data-id="${r.id}">
+      <div class="cat">${r.category}</div>
+      <h3>${r.title}</h3>
+      <div class="by">from the kitchen of <b>${r.submitter.name}</b></div>
+      <div class="meta-row">
+        ${r.makes?`<span>makes ${r.makes}</span>`:""}
+        ${r.oven?`<span>${r.oven}°C</span>`:`<span>no-bake</span>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("lib-label").style.display = rest.length ? "" : "none";
+  if(!feat && !rest.length){
+    document.getElementById("grid").innerHTML =
+      `<p style="color:var(--muted);grid-column:1/-1">No recipes match that yet. Try another category — or be the first to submit one.</p>`;
+  }
+}
+function renderDetail(){
+  const r = RECIPES.find(x=>x.id===S.current);
+  if(!r) return;
+  const i = RECIPES.indexOf(r);
+  const mults = [0.5,1,2,3];
+  const ovenBlock = r.oven
+    ? `<div class="oven">Oven <b>${r.oven}°C</b> · fan <b>${r.oven-20}°C</b> · <b>${Math.round(r.oven*9/5+32)}°F</b></div>`
+    : `<div class="oven">❄ No-bake — set in the fridge</div>`;
+
+  document.getElementById("detail-body").innerHTML = `
+    <div class="r-head">
+      ${avatarFor(r.submitter,i)}
+      <div class="r-title">
+        <div class="cat">${r.category}</div>
+        <h2>${r.title}</h2>
+      </div>
+    </div>
+    ${r.submitter.story?`<div class="story">${r.submitter.story}
+      <span class="who">— <b>${r.submitter.name}</b>, CWA Strahan Branch</span></div>`:""}
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Measurements</label>
+        <div class="toggle" id="unitTog">
+          <button data-unit="metric" aria-pressed="${S.unit==='metric'}">Metric</button>
+          <button data-unit="cups" aria-pressed="${S.unit==='cups'}">Cups</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label>Batch size</label>
+        <div class="steppers" id="multStep">
+          ${mults.map(m=>`<button class="mult" data-m="${m}" aria-pressed="${S.mult===m}">${m===1?'×1':(m<1?'½':'×'+m)}</button>`).join("")}
+        </div>
+      </div>
+      ${r.makes?`<div class="makes">
+        <span class="n">${scaledMakes(r.makes,S.mult)}</span>
+        <small>this batch makes</small>
+      </div>`:""}
+    </div>
+
+    <p class="print-batch">${r.makes?`This batch makes ${scaledMakes(r.makes,S.mult)}`:""}${S.mult!==1?` — quantities scaled ×${S.mult}`:""}</p>
+
+    ${ovenBlock}
+
+    <div class="cols">
+      <div class="panel">
+        <h3>Ingredients</h3>
+        <ul class="ing" id="ingList">
+          ${r.ingredients.map((ing,idx)=>{
+            const f=fmtIng(ing,S.unit,S.mult);
+            return `<li data-idx="${idx}"><span class="tick"></span>
+              ${f.num?`<span class="qty">${f.num}</span>`:""}<span>${f.name}</span></li>`;
+          }).join("")}
+        </ul>
+        <button class="print-btn" id="printBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+          Print this recipe
+        </button>
+      </div>
+      <div class="panel">
+        <h3>Method</h3>
+        <ol class="method" id="methodList">
+          ${r.method.map((s,idx)=>`<li data-idx="${idx}">${s}</li>`).join("")}
+        </ol>
+        ${r.notes?`<div class="notes"><h3>Baker's notes</h3><p>${r.notes}</p></div>`:""}
+      </div>
+    </div>`;
+
+  document.getElementById("unitTog").onclick = e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    S.unit=b.dataset.unit; renderDetail();
+  };
+  document.getElementById("multStep").onclick = e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    S.mult=+b.dataset.m; renderDetail();
+  };
+  document.getElementById("ingList").onclick = e=>{
+    const li=e.target.closest("li"); if(li) li.classList.toggle("done");
+  };
+  document.getElementById("methodList").onclick = e=>{
+    const li=e.target.closest("li"); if(li) li.classList.toggle("done");
+  };
+  document.getElementById("printBtn").onclick = ()=>window.print();
+}
+function openRecipe(id){
+  S.current=id; S.mult=1; renderDetail();
+  document.body.classList.add("viewing"); window.scrollTo(0,0);
+  const r = RECIPES.find(x=>x.id===id);
+  if(r) document.title = r.title + " · CWA Strahan Branch";
+}
+
+function boot(){
+  CATS = ["All", ...Array.from(new Set(RECIPES.map(r=>r.category)))];
+  renderChips(); renderList();
+}
+
+document.getElementById("chips").onclick = e=>{
+  const b=e.target.closest("[data-cat]"); if(!b)return;
+  S.cat=b.dataset.cat; renderChips(); renderList();
+};
+document.getElementById("q").oninput = e=>{ S.q=e.target.value; renderList(); };
+document.querySelector(".listing").addEventListener("click", e=>{
+  const card=e.target.closest(".card"); if(card) openRecipe(card.dataset.id);
+});
+document.getElementById("back").onclick = ()=>{
+  document.body.classList.remove("viewing");
+  document.title = "CWA Strahan Branch · Recipe Collection";
+};
+document.getElementById("formLink").href = CONFIG.FORM_URL;
+document.getElementById("openSubmit").onclick = ()=>document.getElementById("submitModal").classList.add("open");
+document.getElementById("closeSubmit").onclick = ()=>document.getElementById("submitModal").classList.remove("open");
+document.getElementById("submitModal").onclick = e=>{ if(e.target.id==="submitModal") e.currentTarget.classList.remove("open"); };
+
+loadRecipes();
+
+/* ---- PWA: offline shell + install walkthrough ---- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+<script src="install-gate.js" defer></script>
+</body>
+</html>
