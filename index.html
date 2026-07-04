@@ -81,7 +81,7 @@
   .feat-banner::before,.feat-banner::after{content:"✦";font-size:11px;color:var(--gold)}
   .avatar{width:84px;height:84px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:"Fraunces",serif;font-weight:600;font-size:30px;color:#FCF9EF;border:2px solid var(--gold);overflow:hidden}
   .card.feat .avatar{width:104px;height:104px;font-size:38px}
-  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
   .meta-row{font-size:12.5px;color:var(--muted);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap}
   .status{font-size:12px;color:var(--muted);text-align:center;padding:10px 0 0}
   .status b{color:var(--green-d)}
@@ -425,10 +425,20 @@ function headerIndex(headers){
     feature: find("feature","month"), photo: find("photo url")
   };
 }
-function driveImg(u){
+function driveId(u){
   if(!u) return null;
   const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/);
-  return m ? "https://drive.google.com/thumbnail?id="+m[1]+"&sz=w400" : u;
+  return m ? m[1] : null;
+}
+function driveImg(u){
+  const id = driveId(u);
+  /* Google's image server crops to a perfect square server-side (=s400-c),
+     so circles always fill — no ovals, no manual cropping needed. */
+  return id ? "https://lh3.googleusercontent.com/d/"+id+"=s400-c" : (u || null);
+}
+function driveImgAlt(u){
+  const id = driveId(u);
+  return id ? "https://drive.google.com/thumbnail?id="+id+"&sz=w400" : null;
 }
 function rowsToRecipes(rows){
   const idx = headerIndex(rows[0]);
@@ -443,7 +453,8 @@ function rowsToRecipes(rows){
       submitter: {
         name: get(r,idx.name) || "a Strahan Branch member",
         story: get(r,idx.story),
-        photo: driveImg(get(r,idx.photo)) || null
+        photo: driveImg(get(r,idx.photo)) || null,
+        photoAlt: driveImgAlt(get(r,idx.photo))
       },
       makes: get(r,idx.makes) || "",
       oven: (()=>{ const o=parseInt(get(r,idx.oven)); return isNaN(o)?null:o; })(),
@@ -544,7 +555,7 @@ let CATS = [];
 const colours = ["#2E5A38","#A22F2B","#7C221F","#21472B","#8a5a2b"];
 
 function avatarFor(sub, i){
-  if(sub.photo) return `<span class="avatar"><img src="${sub.photo}" alt="" onerror="this.parentNode.textContent='${initials(sub.name)}';this.parentNode.style.background='${colours[i%colours.length]}'"></span>`;
+  if(sub.photo) return `<span class="avatar"><img src="${sub.photo}"${sub.photoAlt?` data-alt="${sub.photoAlt}"`:""} alt="" onerror="if(this.dataset.alt){this.src=this.dataset.alt;this.removeAttribute('data-alt');}else{this.parentNode.textContent='${initials(sub.name)}';this.parentNode.style.background='${colours[i%colours.length]}';}"></span>`;
   return `<span class="avatar" style="background:${colours[i%colours.length]}">${initials(sub.name)}</span>`;
 }
 function initials(name){ return name.split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase(); }
