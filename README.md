@@ -2,7 +2,7 @@
 
 An installable recipe collection built for **CWA Strahan Branch, Tasmania**. Members submit recipes through a Google Form; the branch reviews each one before it goes live. No accounts, no backend server, no tracking — the app reads a published Google Sheet and runs entirely in the browser.
 
-**Live app:** _add your GitHub Pages URL here once deployed_
+**Live app:** https://cwa-strahan.github.io/Recipes/
 
 ---
 
