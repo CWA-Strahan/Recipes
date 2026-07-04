@@ -1,6 +1,6 @@
 /* CWA Strahan Recipes — service worker
    Bump CACHE_VERSION whenever index.html or the icons change. */
-const CACHE_VERSION = "cwa-recipes-v5";
+const CACHE_VERSION = "cwa-recipes-v6";
 const SHELL = [
   "./",
   "./index.html",
